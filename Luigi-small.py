@@ -4,8 +4,11 @@ import discord
 import random
 import json
 import aiohttp 
+import time
 from dotenv import load_dotenv
 from discord.ext import commands
+from random import seed
+from random import randint
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
@@ -21,6 +24,34 @@ async def on_ready():
         f'{bot.user} is connected to the following guild:\n'
         f'{guild.name}(id: {guild.id})'
     )
+
+@bot.command(name='attack')
+async def attack(ctx, *rolls):
+    ## calculate attacks
+    millis = int(round(time.time() * 1000))
+    seed(millis)
+    attackList = rolls[0]
+    singleAttack = ""
+    for attack in attackList.split(','):
+        value = randint(1, 20)
+        attack_bonus = int(attack) 
+        total_val = value + attack_bonus
+        singleAttack = singleAttack + f"""({value})+{attack} = {total_val}
+        """
+    attackmessage = f"""
+        >>>  attack
+        {singleAttack}
+        """
+    
+    if (len(attackmessage)>2000):
+        for chunk in chunks(attackmessage, 1975):
+            if (chunk.find(">>>")>0):
+                await ctx.send(chunk)
+            else:
+                await ctx.send(">>> " + chunk)
+    else:
+        await ctx.send(attackmessage)
+
 
 @bot.command(name='xp')
 async def xp(ctx, level):
