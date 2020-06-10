@@ -288,7 +288,10 @@ async def common_sense(ctx):
         'But it\'s a Trumpet Archon, it\'s immune to poison'
         ]
     response = random.choice(book_of_common_sense)
-    await ctx.send(response)
+    comment = f"""
+    >>> {response} 
+    """
+    await ctx.send(comment)
 
 
 bot.run(TOKEN)
