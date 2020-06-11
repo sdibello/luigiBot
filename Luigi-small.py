@@ -26,11 +26,11 @@ async def on_ready():
     )
 
 @bot.command(name='attack')
-async def attack(ctx, *rolls):
+async def attack(ctx, *args):
     ## calculate attacks
     millis = int(round(time.time() * 1000))
     seed(millis)
-    attackList = rolls[0]
+    attackList = args[0]
     singleAttack = "" 
     user = ctx.author.name
     id = ctx.author.id
