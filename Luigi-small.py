@@ -31,15 +31,17 @@ async def attack(ctx, *rolls):
     millis = int(round(time.time() * 1000))
     seed(millis)
     attackList = rolls[0]
-    singleAttack = ""
+    singleAttack = "" 
+    user = ctx.author.name
+    id = ctx.author.id
     for attack in attackList.split(','):
-        value = randint(1, 20)
+        roll = randint(1, 20)
         attack_bonus = int(attack) 
-        total_val = value + attack_bonus
-        singleAttack = singleAttack + f"""({value})+{attack} = {total_val}
+        total_val = roll + attack_bonus
+        singleAttack = singleAttack + f"""({roll})+{attack_bonus} = {total_val}
         """
     attackmessage = f"""
-        >>>  attack
+        >>>  attack for {user}
         {singleAttack}
         """
     
