@@ -9,11 +9,13 @@ from dotenv import load_dotenv
 from discord.ext import commands
 from random import seed
 from random import randint
+from collections import namedtuple
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 GUILD = os.getenv('DISCORD_GUILD')
-attack_dict = {"temp": "100,100,100"}
+attack_dict = {}
+att_dict = {}
 
 #client = discord.Client()
 bot = commands.Bot(command_prefix='!')
@@ -29,26 +31,43 @@ async def on_ready():
 @bot.command(name='attack')
 async def attack(ctx, *args):
     ## calculate attacks
+    Attacks = namedtuple('Attacks', ['att', 'crit'])
     singleAttack = "" 
     millis = int(round(time.time() * 1000))
     seed(millis)
+    isCritical = ""
+    critical = 20   ##default
     id = ctx.author.id
     if (len(args) == 0):
         attackList = attack_dict[id]
+        a = att_dict[id]
     else:
-        attackList = args[0]
+        if (len(args) >= 1):
+            attackList = args[0]
+            a = Attacks(att=args[0], crit="20")
+        if (len(args) >= 2):
+            critical = args[1]
+            a = Attacks(att=args[0], crit=args[1])
         attack_dict.update({id:attackList})
+        att_dict.update({id:a})
 
     user = ctx.author.name
     for attack in attackList.split(','):
         roll = randint(1, 20)
         attack_bonus = int(attack) 
         total_val = roll + attack_bonus
-        singleAttack = singleAttack + f"""({roll})+{attack_bonus} = {total_val}
+        if (int(roll) >= int(critical)):
+            millis = int(round(time.time() * 1000))
+            seed(millis)
+            criticalroll = randint(1, 20)
+            isCritical = f" - CRITICAL - Confirm Roll ({criticalroll})"
+        singleAttack = singleAttack + f"""({roll})+{attack_bonus} = {total_val} {isCritical}
         """
+        isCritical = ""
+
     attackmessage = f"""
         >>>  attack for {user}
-        {singleAttack}
+        {singleAttack} 
         """
     
     if (len(attackmessage)>2000):
