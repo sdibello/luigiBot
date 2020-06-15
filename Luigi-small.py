@@ -13,6 +13,7 @@ from random import randint
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 GUILD = os.getenv('DISCORD_GUILD')
+attack_dict = {"temp": "100,100,100"}
 
 #client = discord.Client()
 bot = commands.Bot(command_prefix='!')
@@ -28,12 +29,17 @@ async def on_ready():
 @bot.command(name='attack')
 async def attack(ctx, *args):
     ## calculate attacks
+    singleAttack = "" 
     millis = int(round(time.time() * 1000))
     seed(millis)
-    attackList = args[0]
-    singleAttack = "" 
-    user = ctx.author.name
     id = ctx.author.id
+    if (len(args) == 0):
+        attackList = attack_dict[id]
+    else:
+        attackList = args[0]
+        attack_dict.update({id:attackList})
+
+    user = ctx.author.name
     for attack in attackList.split(','):
         roll = randint(1, 20)
         attack_bonus = int(attack) 
@@ -325,6 +331,5 @@ async def common_sense(ctx):
     >>> {response} 
     """
     await ctx.send(comment)
-
 
 bot.run(TOKEN)
