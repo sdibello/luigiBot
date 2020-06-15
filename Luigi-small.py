@@ -14,7 +14,6 @@ from collections import namedtuple
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 GUILD = os.getenv('DISCORD_GUILD')
-attack_dict = {}
 att_dict = {}
 
 #client = discord.Client()
@@ -34,31 +33,28 @@ async def attack(ctx, *args):
     Attacks = namedtuple('Attacks', ['att', 'crit'])
     singleAttack = "" 
     millis = int(round(time.time() * 1000))
-    seed(millis)
-    isCritical = ""
-    critical = 20   ##default
     id = ctx.author.id
+    seed(millis+id)
+    isCritical = ""
+    a = Attacks(att=1, crit="20")
     if (len(args) == 0):
-        attackList = attack_dict[id]
         a = att_dict[id]
     else:
         if (len(args) >= 1):
-            attackList = args[0]
             a = Attacks(att=args[0], crit="20")
         if (len(args) >= 2):
-            critical = args[1]
             a = Attacks(att=args[0], crit=args[1])
-        attack_dict.update({id:attackList})
         att_dict.update({id:a})
 
     user = ctx.author.name
-    for attack in attackList.split(','):
+    for attack in a.att.split(','):
         roll = randint(1, 20)
+        critical = a.crit
         attack_bonus = int(attack) 
         total_val = roll + attack_bonus
         if (int(roll) >= int(critical)):
             millis = int(round(time.time() * 1000))
-            seed(millis)
+            seed(millis+id)
             criticalroll = randint(1, 20)
             isCritical = f" - CRITICAL - Confirm Roll ({criticalroll})"
         singleAttack = singleAttack + f"""({roll})+{attack_bonus} = {total_val} {isCritical}
