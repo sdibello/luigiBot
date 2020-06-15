@@ -4,12 +4,17 @@ import discord
 import random
 import json
 import aiohttp 
+import time
 from dotenv import load_dotenv
 from discord.ext import commands
+from random import seed
+from random import randint
+from collections import namedtuple
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 GUILD = os.getenv('DISCORD_GUILD')
+att_dict = {}
 
 #client = discord.Client()
 bot = commands.Bot(command_prefix='!')
@@ -21,6 +26,55 @@ async def on_ready():
         f'{bot.user} is connected to the following guild:\n'
         f'{guild.name}(id: {guild.id})'
     )
+
+@bot.command(name='attack')
+async def attack(ctx, *args):
+    ## calculate attacks
+    Attacks = namedtuple('Attacks', ['att', 'crit'])
+    singleAttack = "" 
+    millis = int(round(time.time() * 1000))
+    id = ctx.author.id
+    seed(millis+id)
+    isCritical = ""
+    a = Attacks(att=1, crit="20")
+    if (len(args) == 0):
+        a = att_dict[id]
+    else:
+        if (len(args) >= 1):
+            a = Attacks(att=args[0], crit="20")
+        if (len(args) >= 2):
+            a = Attacks(att=args[0], crit=args[1])
+        att_dict.update({id:a})
+
+    user = ctx.author.name
+    for attack in a.att.split(','):
+        roll = randint(1, 20)
+        critical = a.crit
+        attack_bonus = int(attack) 
+        total_val = roll + attack_bonus
+        if (int(roll) >= int(critical)):
+            millis = int(round(time.time() * 1000))
+            seed(millis+id)
+            criticalroll = randint(1, 20)
+            isCritical = f" - CRITICAL - Confirm Roll ({criticalroll})"
+        singleAttack = singleAttack + f"""({roll})+{attack_bonus} = {total_val} {isCritical}
+        """
+        isCritical = ""
+
+    attackmessage = f"""
+        >>>  attack for {user}
+        {singleAttack} 
+        """
+    
+    if (len(attackmessage)>2000):
+        for chunk in chunks(attackmessage, 1975):
+            if (chunk.find(">>>")>0):
+                await ctx.send(chunk)
+            else:
+                await ctx.send(">>> " + chunk)
+    else:
+        await ctx.send(attackmessage)
+
 
 @bot.command(name='xp')
 async def xp(ctx, level):
@@ -292,6 +346,5 @@ async def common_sense(ctx):
     >>> {response} 
     """
     await ctx.send(comment)
-
 
 bot.run(TOKEN)
