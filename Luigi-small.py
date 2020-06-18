@@ -5,36 +5,62 @@ import random
 import json
 import aiohttp 
 import time
+import sys
+import asyncio
+import logging
 from dotenv import load_dotenv
 from discord.ext import commands
-from random import seed
 from random import randint
 from collections import namedtuple
 
+
+#load env
 load_dotenv()
+#environment settings
+luigi_version = "1.0.1"
 TOKEN = os.getenv('DISCORD_TOKEN')
 GUILD = os.getenv('DISCORD_GUILD')
-att_dict = {}
+DND_API_URL = os.getenv('DND_API_URL')
 
-#client = discord.Client()
-bot = commands.Bot(command_prefix='!')
+# attack processing section
+att_dict = {}
+Attacks = namedtuple('Attacks', ['att', 'crit'])
+# setting up bot command key
+bot = commands.Bot(command_prefix='!',case_insensitive='true')
+root = logging.getLogger()
+root.setLevel(logging.INFO)
+
+handler = logging.StreamHandler(sys.stdout)
+handler.setLevel(logging.DEBUG)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+root.addHandler(handler)
+
+#class LuigiBot(discord.Client):
+#    async def on_ready():
+#        guild = discord.utils.find(lambda g: g.name == GUILD, bot.guilds)
+#        print(
+#            f'{bot.user} is connected to the following guild:\n'
+#            f'\t{guild.name}(id: {guild.id})'
+#        )
 
 @bot.event
 async def on_ready():
     guild = discord.utils.find(lambda g: g.name == GUILD, bot.guilds)
-    print(
-        f'{bot.user} is connected to the following guild:\n'
-        f'{guild.name}(id: {guild.id})'
-    )
+    root.info(f'{bot.user} is connected to the following guild:\n')
+    root.info(f'{guild.name}(id: {guild.id})\n')
+    root.info(f'discord version: {discord.__version__}')
+    root.info("starting luigibot")
+    root.info(f"version:{luigi_version}")
 
 @bot.command(name='attack')
 async def attack(ctx, *args):
     ## calculate attacks
-    Attacks = namedtuple('Attacks', ['att', 'crit'])
-    singleAttack = "" 
-    millis = int(round(time.time() * 1000))
+    sargs = ' -'.join(args)
     id = ctx.author.id
-    seed(millis+id)
+
+    root.info(f"{ctx.author.name} attack called with args :{sargs}")
+    singleAttack = "" 
     isCritical = ""
     a = Attacks(att=1, crit="20")
     if (len(args) == 0):
@@ -51,29 +77,20 @@ async def attack(ctx, *args):
         roll = randint(1, 20)
         critical = a.crit
         attack_bonus = int(attack) 
-        total_val = roll + attack_bonus
+        total_val = int(roll) + int(attack_bonus)
+        count = 1
         if (int(roll) >= int(critical)):
-            millis = int(round(time.time() * 1000))
-            seed(millis+id)
+            count += 1
             criticalroll = randint(1, 20)
             isCritical = f" - CRITICAL - Confirm Roll ({criticalroll})"
         singleAttack = singleAttack + f"""({roll})+{attack_bonus} = {total_val} {isCritical}
         """
-        isCritical = ""
 
     attackmessage = f"""
         >>>  attack for {user}
         {singleAttack} 
         """
-    
-    if (len(attackmessage)>2000):
-        for chunk in chunks(attackmessage, 1975):
-            if (chunk.find(">>>")>0):
-                await ctx.send(chunk)
-            else:
-                await ctx.send(">>> " + chunk)
-    else:
-        await ctx.send(attackmessage)
+    write_to_discord(ctx, attackmessage)
 
 
 @bot.command(name='xp')
@@ -111,7 +128,6 @@ async def spells_by_class_and_level(ctx, *id):
                 await ctx.send(">>> " + chunk)
         else:
             await ctx.send(search_spell)
-
 
 @bot.command(name='feat')
 async def feat(ctx, *id):
@@ -161,14 +177,7 @@ async def feat(ctx, *id):
             {required_feats}
             {required_feats_by}
             """
-        if (len(feat)>2000):
-            for chunk in chunks(feat, 1975):
-                if (chunk.find(">>>")>0):
-                    await ctx.send(chunk)
-                else:
-                    await ctx.send(">>> " + chunk)
-        else:
-            await ctx.send(feat)
+        write_to_discord(ctx, feat)
 
 @bot.command(name='spell')
 async def spell(ctx, *id):
@@ -258,16 +267,24 @@ async def spell(ctx, *id):
             **Range** {range}
             {message}
             """
-        if (len(spell)>2000):
-            for chunk in chunks(spell, 1975):
-                if (chunk.find(">>>")>0):
-                    await ctx.send(chunk)
-                else:
-                    await ctx.send(">>> " + chunk)
-        else:
-            await ctx.send(spell)
 
-def chunks(s, n):
+        write_to_discord(ctx, spell)
+
+### Coroutine
+### discord has a 2000 character limit when posting, so we need to catch that and split the message up
+### discord.ext.commands.Context
+async def write_to_discord(self, ctx, message):
+    await self.wait.wait_until_ready()
+    if (len(message)>2000):
+        for chunk in chunks(message, 1975):
+            if (chunk.find(">>>")==0):
+                chunk = ">>> " + chunk
+            await ctx.send(chunk)
+    else:
+        await ctx.send(chunk)
+
+### take out part of the sprint for chunking.
+async def chunks(s, n):
     for start in range(0, len(s), n):
         yield s[start:start+n]
 
