@@ -5,6 +5,8 @@ import random
 import json
 import aiohttp 
 import time
+import logging
+import sys
 from dotenv import load_dotenv
 from discord.ext import commands
 from random import seed
@@ -14,18 +16,29 @@ from collections import namedtuple
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 GUILD = os.getenv('DISCORD_GUILD')
+DND_API_URL = os.getenv('DND_API_URL')
 att_dict = {}
+luigi_version = "1.0.1"
 
 #client = discord.Client()
 bot = commands.Bot(command_prefix='!')
+#logging
+root = logging.getLogger()
+root.setLevel(logging.INFO)
+handler = logging.StreamHandler(sys.stdout)
+handler.setLevel(logging.DEBUG)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+root.addHandler(handler)
 
 @bot.event
 async def on_ready():
     guild = discord.utils.find(lambda g: g.name == GUILD, bot.guilds)
-    print(
-        f'{bot.user} is connected to the following guild:\n'
-        f'{guild.name}(id: {guild.id})'
-    )
+    root.info(f'{bot.user} is connected to the following guild:\n')
+    root.info(f'{guild.name}(id: {guild.id})\n')
+    root.info(f'discord version: {discord.__version__}')
+    root.info("starting luigibot")
+    root.info(f"version:{luigi_version}")
 
 @bot.command(name='attack')
 async def attack(ctx, *args):
@@ -183,6 +196,9 @@ async def spell(ctx, *id):
     duration = ""
     target = ""
     slug = ""
+    school = ""
+    subschool = ""
+    schoolOutput = ""
     s = " "
     if (len(id)>1):
         s = s.join(id)
@@ -236,6 +252,24 @@ async def spell(ctx, *id):
         target = response['target']
         slug = response['slug']
 
+    ### add " school " to the spell response
+    url = 'http://localhost:5241/api/v1/Spells/{0}/school'.format(fid)
+    print (url)
+    async with aiohttp.ClientSession() as session:  # Async HTTP request
+        raw_response = await session.get(url)
+        response = await raw_response.text()
+        response = json.loads(response)
+        for r in response:
+            school = r['schoolName']
+            subschool = r['subSchoolName']
+        if (school != None):
+            if (len(school)>0):
+                schoolOutput = f"[{school}]"
+                if (subschool != None):
+                    if (len(subschool)>0):
+                        schoolOutput = f"[{school}]({subschool})"
+
+    ### add class who can cast the spell to the response
     url = 'http://localhost:5241/api/v1/Spells/{0}/class'.format(fid)
     print (url)
     async with aiohttp.ClientSession() as session:  # Async HTTP request
@@ -248,7 +282,7 @@ async def spell(ctx, *id):
             level = r['level']
             message = message + f"{classname}({level}) "
         spell = f"""
-            >>> __**{title}**__  ({slug})
+            >>> __**{title}**__  {schoolOutput}
             {description}
             **Casting Time:** {castingTime}
             **Saving Throw:** {savingThrow}

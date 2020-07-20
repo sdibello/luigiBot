@@ -27,9 +27,9 @@ att_dict = {}
 Attacks = namedtuple('Attacks', ['att', 'crit'])
 # setting up bot command key
 bot = commands.Bot(command_prefix='!',case_insensitive='true')
+#logging
 root = logging.getLogger()
 root.setLevel(logging.INFO)
-
 handler = logging.StreamHandler(sys.stdout)
 handler.setLevel(logging.DEBUG)
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -273,8 +273,7 @@ async def spell(ctx, *id):
 ### Coroutine
 ### discord has a 2000 character limit when posting, so we need to catch that and split the message up
 ### discord.ext.commands.Context
-async def write_to_discord(self, ctx, message):
-    await self.wait.wait_until_ready()
+async def write_to_discord(ctx, message):
     if (len(message)>2000):
         for chunk in chunks(message, 1975):
             if (chunk.find(">>>")==0):
