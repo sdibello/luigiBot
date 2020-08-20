@@ -373,7 +373,8 @@ async def common_sense(ctx):
         '"What was your grandfather\'s name?", "Um….er….I don\'t remember", "Wait, aren’t you Claude Greymander the 3rd?\n -  Claude and Daane talking about Claude’s past',
         'Don\'t enter tombs (Borkons) that require Kobald castrations',
         'Tombs full of hanging balls sacks are not safe',
-        'But it\'s a Trumpet Archon, it\'s immune to poison'
+        'But it\'s a Trumpet Archon, it\'s immune to poison',
+        'Don\'t leave the golembane weapons at home if you\'re headed to the Plateau looking for trouble. On second thought, never leave the golembane weapons at home.'
         ]
     response = random.choice(book_of_common_sense)
     comment = f"""
