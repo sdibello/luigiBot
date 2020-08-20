@@ -374,7 +374,7 @@ async def common_sense(ctx):
         'Don\'t enter tombs (Borkons) that require Kobald castrations',
         'Tombs full of hanging balls sacks are not safe',
         'But it\'s a Trumpet Archon, it\'s immune to poison',
-        'Don\'t leave the golembane weapons at home if you\'re headed to the Plateau looking for trouble. On second thought, never leave the golembane weapons at home.'
+        'Don\'t leave the golembane weapons at home if you\'re headed to the Plateau looking for trouble.\n On second thought, never leave the golembane weapons at home.'
         ]
     response = random.choice(book_of_common_sense)
     comment = f"""
