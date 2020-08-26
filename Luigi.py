@@ -261,7 +261,7 @@ async def spell(ctx, *id):
         response = json.loads(response)
         for r in response:
             school = r['schoolName']
-            subschool = r['subSchoolName']
+            ##subschool = r['subSchoolName']
         if (school != None):
             if (len(school)>0):
                 schoolOutput = f"[{school}]"
