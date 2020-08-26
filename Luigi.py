@@ -259,15 +259,21 @@ async def spell(ctx, *id):
         raw_response = await session.get(url)
         response = await raw_response.text()
         response = json.loads(response)
+        primary = ""
+        seconary = ""
         for r in response:
+            flag = r['isPrimary']
             school = r['schoolName']
-            ##subschool = r['subSchoolName']
+            if flag == True:
+                primary = school
+            else:
+                seconday = school
         if (school != None):
-            if (len(school)>0):
-                schoolOutput = f"[{school}]"
-                if (subschool != None):
-                    if (len(subschool)>0):
-                        schoolOutput = f"[{school}]({subschool})"
+            if (len(primary)>0):
+                schoolOutput = f"[{primary}]"
+                if (seconday != None):
+                    if (len(seconday)>0):
+                        schoolOutput = f"[{primary}]({seconday})"
 
     ### add class who can cast the spell to the response
     url = 'http://localhost:5241/api/v1/Spells/{0}/class'.format(fid)
