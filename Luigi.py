@@ -7,6 +7,7 @@ import aiohttp
 import time
 import logging
 import sys
+import collections
 from dotenv import load_dotenv
 from discord.ext import commands
 from random import seed
@@ -200,112 +201,151 @@ async def spell(ctx, *id):
     subschool = ""
     schoolOutput = ""
     s = " "
+
+    ## if searching for a word like "magic missile" it'll come as multiple parameters, join them together.
     if (len(id)>1):
         s = s.join(id)
     else:
         s = id[0]
     url = 'http://localhost:5241/api/v1/Spells/{0}'.format(s)
     print (url)
+    multi = collections.namedtuple('Multiple', 'spellid rulebookid name')
+    dancing = []
+    idss = []
+
     async with aiohttp.ClientSession() as session:  # Async HTTP request
         raw_response = await session.get(url)
         response = await raw_response.text()
         response = json.loads(response)
-        fid = response['id']
 
-        if (fid==0):
-            snarky_response = [
-            'Yeah, I had an apprentice try that once.',
-            'Cloud tried to pull that once with a Carne Pyre...',
-            'Next time I see Russel.. i\'ll ask him what you mean.... ',
-            'Spellcasting is like cooking, it\'s not just ingrediants mixed together..',
-            ' I\'m too old for this shit..',
-            ' Yeah, And i\'ve met Dedestroyt too .. ',
-            ]
-            randomrespone = random.choice(snarky_response)
-            response['search']
-            spelllist = ""
-            for s in response['search']:
-                spell = s['name']
-                spelllist = spelllist + f"{spell}, "
-            message = f"""
-            >>> {randomrespone}
-            Did you really mean one of these? - {spelllist}
-            """
-            if (len(message)>2000):
-                for chunk in chunks(message, 1975):
-                    if (chunk.find(">>>")>0):
-                        await ctx.send(chunk)
-                    else:
-                        await ctx.send(">>> " + chunk)
-                return
-            else:
-                await ctx.send(message)
-                return
-        
-        description = response['description']
-        title = response['name']
-        castingTime = response['castingTime']
-        range = response['range']
-        savingThrow = response['savingThrow']
-        spellResistance = response['spellResistance']
-        duration = response['duration']
-        target = response['target']
-        slug = response['slug']
+        if len(response) > 1:
+            for rep in response:
+                iter = multi( spellid = rep['id'], rulebookid= rep['rulebookId'], name="")
+                idss.append(str(rep['rulebookId']))
+                dancing.append(iter)
 
-    ### add " school " to the spell response
-    url = 'http://localhost:5241/api/v1/Spells/{0}/school'.format(fid)
-    print (url)
-    async with aiohttp.ClientSession() as session:  # Async HTTP request
-        raw_response = await session.get(url)
-        response = await raw_response.text()
-        response = json.loads(response)
-        primary = ""
-        seconary = ""
-        for r in response:
-            flag = r['isPrimary']
-            school = r['schoolName']
-            if flag == True:
-                primary = school
-            else:
-                seconday = school
-        if (school != None):
-            if (len(primary)>0):
-                schoolOutput = f"[{primary}]"
-                if (seconday != None):
-                    if (len(seconday)>0):
-                        schoolOutput = f"[{primary}]({seconday})"
+        if len(dancing) > 0:
+            books = ','.join(idss)
+            url = 'http://localhost:5241/api/v1/lookup/rulebook?ids={0}'.format(books)
+            print (url)
+            async with aiohttp.ClientSession() as session:  # Async HTTP request
+                raw_response = await session.get(url)
+                bookresponse = await raw_response.text()
+                bookresponse = json.loads(bookresponse)
+                for book in bookresponse:
+                    print(book["name"])
 
-    ### add class who can cast the spell to the response
-    url = 'http://localhost:5241/api/v1/Spells/{0}/class'.format(fid)
-    print (url)
-    async with aiohttp.ClientSession() as session:  # Async HTTP request
-        raw_response = await session.get(url)
-        response = await raw_response.text()
-        response = json.loads(response)
-        message = "**Class:** "
-        for r in response:
-            classname = r['className']
-            level = r['level']
-            message = message + f"{classname}({level}) "
-        spell = f"""
-            >>> __**{title}**__  {schoolOutput}
-            {description}
-            **Casting Time:** {castingTime}
-            **Saving Throw:** {savingThrow}
-            **Spell Resistance** {spellResistance}
-            **Duration:** {duration} 
-            **Target** {target}
-            **Range** {range}
-            {message}
-            """
-        if (len(spell)>2000):
-            for chunk in chunks(spell, 1975):
-                if (chunk.find(">>>")>0):
-                    await ctx.send(chunk)
+
+        for rep in response:
+            fid = ""
+            description = ""
+            title = ""
+            castingTime = ""
+            range = ""
+            savingThrow = ""
+            spellResistance = ""
+            duration = ""
+            target = ""
+            slug = ""
+            school = ""
+            subschool = ""
+            schoolOutput = ""
+            fid = rep['id']
+
+            if (fid==0):
+                snarky_response = [
+                'Yeah, I had an apprentice try that once.',
+                'Cloud tried to pull that once with a Carne Pyre...',
+                'Next time I see Russel.. i\'ll ask him what you mean.... ',
+                'Spellcasting is like cooking, it\'s not just ingrediants mixed together..',
+                ' I\'m too old for this shit..',
+                ' Yeah, And i\'ve met Dedestroyt too .. ',
+                ]
+                randomrespone = random.choice(snarky_response)
+                rep['search']
+                spelllist = ""
+                for s in rep['search']:
+                    spell = s['name']
+                    spelllist = spelllist + f"{spell}, "
+                message = f"""
+                >>> {randomrespone}
+                Did you really mean one of these? - {spelllist}
+                """
+                if (len(message)>2000):
+                    for chunk in chunks(message, 1975):
+                        if (chunk.find(">>>")>0):
+                            await ctx.send(chunk)
+                        else:
+                            await ctx.send(">>> " + chunk)
+                    return
                 else:
-                    await ctx.send(">>> " + chunk)
-        else:
-            await ctx.send(spell)
+                    await ctx.send(message)
+                    return
+            
+            description = rep['description']
+            title = rep['name']
+            castingTime = rep['castingTime']
+            range = rep['range']
+            savingThrow = rep['savingThrow']
+            spellResistance = rep['spellResistance']
+            duration = rep['duration']
+            target = rep['target']
+            slug = rep['slug']
+
+            ### add " school " to the spell response
+            url = 'http://localhost:5241/api/v1/Spells/{0}/school'.format(fid)
+            print (url)
+            async with aiohttp.ClientSession() as session:  # Async HTTP request
+                raw_response = await session.get(url)
+                response = await raw_response.text()
+                response = json.loads(response)
+                primary = ""
+                secondary = ""
+                for r in response:
+                    flag = r['isPrimary']
+                    school = r['schoolName']
+                    if flag == True:
+                        primary = school
+                    else:
+                        secondary = school
+                if (school != None):
+                    if (len(primary)>0):
+                        schoolOutput = f"[{primary}]"
+                        if (secondary != None):
+                            if (len(secondary)>0):
+                                schoolOutput = f"[{primary}]({secondary})"
+
+            ### add class who can cast the spell to the response
+            url = 'http://localhost:5241/api/v1/Spells/{0}/class'.format(fid)
+            print (url)
+            async with aiohttp.ClientSession() as session:  # Async HTTP request
+                raw_response = await session.get(url)
+                response = await raw_response.text()
+                response = json.loads(response)
+                message = "**Class:** "
+                for r in response:
+                    classname = r['className']
+                    level = r['level']
+                    message = message + f"{classname}({level}) "
+                spell = f"""
+                    >>> __**{title}**__  {schoolOutput}
+                    {description}
+                    **Casting Time:** {castingTime}
+                    **Saving Throw:** {savingThrow}
+                    **Spell Resistance:** {spellResistance}
+                    **Duration:** {duration} 
+                    **Target:** {target}
+                    **Range:** {range}
+                    {message}
+                    """
+                if (len(spell)>2000):
+                    for chunk in chunks(spell, 1900):
+                        if (chunk.find(">>>")>0):
+                            await ctx.send(chunk)
+                        else:
+                            await ctx.send(">>> " + chunk)
+                else:
+                    await ctx.send(spell)
 
 def chunks(s, n):
     for start in range(0, len(s), n):
