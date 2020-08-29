@@ -209,7 +209,7 @@ async def spell(ctx, *id):
         s = id[0]
     url = 'http://localhost:5241/api/v1/Spells/{0}'.format(s)
     print (url)
-    multi = collections.namedtuple('Multiple', 'spellid rulebookid name')
+    multi = collections.namedtuple('Multiple', 'spellid rulebookid')
     dancing = []
     idss = []
 
@@ -217,10 +217,12 @@ async def spell(ctx, *id):
         raw_response = await session.get(url)
         response = await raw_response.text()
         response = json.loads(response)
+        bookmessage = ""
 
+        # - loop through the spell response to see if there are more then 1, if there are
         if len(response) > 1:
             for rep in response:
-                iter = multi( spellid = rep['id'], rulebookid= rep['rulebookId'], name="")
+                iter = multi( spellid = rep['id'], rulebookid= rep['rulebookId'])
                 idss.append(str(rep['rulebookId']))
                 dancing.append(iter)
 
@@ -233,7 +235,17 @@ async def spell(ctx, *id):
                 bookresponse = await raw_response.text()
                 bookresponse = json.loads(bookresponse)
                 for book in bookresponse:
-                    print(book["name"])
+                    rbid = book["id"]
+                    for dance in dancing:
+                        if dance.rulebookid == rbid:
+                            rb = dance.spellid
+                            name = book['name']
+                            bookmessage = bookmessage + f"\t{s} ({rb}) in book {name}\n"
+                mult = f"""
+                    I can't read minds, which spell did you mean?
+                    {bookmessage}"""
+                await ctx.send(mult)
+                return
 
 
         for rep in response:
