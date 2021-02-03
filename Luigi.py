@@ -20,6 +20,7 @@ GUILD = os.getenv('DISCORD_GUILD')
 DND_API_URL = os.getenv('DND_API_URL')
 att_dict = {}
 luigi_version = "1.0.1"
+SPELL_COMPENDIUM = 4435
 
 #client = discord.Client()
 bot = commands.Bot(command_prefix='!')
@@ -247,7 +248,6 @@ async def spell(ctx, *id):
                 await ctx.send(mult)
                 return
 
-
         for rep in response:
             fid = ""
             description = ""
@@ -336,9 +336,13 @@ async def spell(ctx, *id):
                 response = json.loads(response)
                 message = "**Class:** "
                 for r in response:
-                    classname = r['className']
-                    level = r['level']
-                    message = message + f"{classname}({level}) "
+                    if response['status'] == '200':
+                        classname = r['className']
+                        level = r['level']
+                        message = message + f"{classname}({level}) "
+                    else:
+                        classname = ""
+                        level = ""
                 spell = f"""
                     >>> __**{title}**__  {schoolOutput}
                     {description}
