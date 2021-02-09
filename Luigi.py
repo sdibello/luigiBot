@@ -307,8 +307,9 @@ async def spell(ctx, *id):
             ### add " school " to the spell response
             url = 'http://localhost:5241/api/v1/Spells/{0}/school'.format(fid)
             print (url)
-            async with aiohttp.ClientSession() as session:  # Async HTTP request
-                raw_response = await session.get(url)
+            session = aiohttp.ClientSession()
+            async with session.get(url) as raw_response:  # Async HTTP request
+                #raw_response = await session.get(url)
                 response = await raw_response.text()
                 response = json.loads(response)
                 primary = ""
@@ -330,13 +331,15 @@ async def spell(ctx, *id):
             ### add class who can cast the spell to the response
             url = 'http://localhost:5241/api/v1/Spells/{0}/class'.format(fid)
             print (url)
-            async with aiohttp.ClientSession() as session:  # Async HTTP request
-                raw_response = await session.get(url)
+            session = aiohttp.ClientSession() 
+            async with session.get(url) as raw_response:  # Async HTTP request
+                #raw_response = await session.get(url)
+                status = raw_response.status
                 response = await raw_response.text()
                 response = json.loads(response)
                 message = "**Class:** "
                 for r in response:
-                    if response['status'] == '200':
+                    if status == 200:
                         classname = r['className']
                         level = r['level']
                         message = message + f"{classname}({level}) "
