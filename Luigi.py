@@ -4,6 +4,7 @@ import discord
 import random
 import json
 import aiohttp 
+
 from dotenv import load_dotenv
 from discord.ext import commands
 
@@ -12,7 +13,11 @@ TOKEN = os.getenv('DISCORD_TOKEN')
 GUILD = os.getenv('DISCORD_GUILD')
 
 #client = discord.Client()
-bot = commands.Bot(command_prefix='!')
+int = discord.Intents.default()
+int.members = True
+int.message_content = True
+
+bot = commands.Bot(command_prefix='!', intents=int, case_insensitive=True, self_bot=True)
 
 @bot.event
 async def on_ready():
@@ -31,7 +36,7 @@ async def xp(ctx, level):
 @bot.command(name='list')
 async def spells_by_class_and_level(ctx, *id):
     ## initialization variables
-    url = 'http://localhost:5241/api/v1/Spells/{0}/{1}'.format(id[0], id[1])
+    url = 'http://localhost:5001/api/v1/Spells/{0}/{1}'.format(id[0], id[1])
     print (url)
     class_name = id[0]
     class_level = id[1]
@@ -72,7 +77,7 @@ async def feat(ctx, *id):
         s = s.join(id)
     else:
         s = id[0]
-    url = 'http://localhost:5241/api/v1/Feat/{0}'.format(s)
+    url = 'http://localhost:5001/api/v1/Feat/{0}'.format(s)
     print (url)
     async with aiohttp.ClientSession() as session:  # Async HTTP request
         raw_response = await session.get(url)
@@ -85,7 +90,7 @@ async def feat(ctx, *id):
         slug = response['slug']
 
 
-    url = 'http://localhost:5241/api/v1/Feat/{0}/requirement'.format(fid)
+    url = 'http://localhost:5001/api/v1/Feat/{0}/requirement'.format(fid)
     print (url)
     async with aiohttp.ClientSession() as session:  # Async HTTP request
         raw_response = await session.get(url)
@@ -134,13 +139,15 @@ async def spell(ctx, *id):
         s = s.join(id)
     else:
         s = id[0]
-    url = 'http://localhost:5241/api/v1/Spells/{0}'.format(s)
+    url = 'http://localhost:5001/api/v1/Spells/{0}'.format(s)
     print (url)
     async with aiohttp.ClientSession() as session:  # Async HTTP request
         raw_response = await session.get(url)
         response = await raw_response.text()
         response = json.loads(response)
-        fid = response['id']
+        parsed = response[0]
+        fid = parsed['id']
+
 
         if (fid==0):
             snarky_response = [
@@ -172,17 +179,17 @@ async def spell(ctx, *id):
                 await ctx.send(message)
                 return
         
-        description = response['description']
-        title = response['name']
-        castingTime = response['castingTime']
-        range = response['range']
-        savingThrow = response['savingThrow']
-        spellResistance = response['spellResistance']
-        duration = response['duration']
-        target = response['target']
-        slug = response['slug']
+        description = parsed['description']
+        title = parsed['name']
+        castingTime = parsed['castingTime']
+        range = parsed['range']
+        savingThrow = parsed['savingThrow']
+        spellResistance = parsed['spellResistance']
+        duration = parsed['duration']
+        target = parsed['target']
+        slug = parsed['slug']
 
-    url = 'http://localhost:5241/api/v1/Spells/{0}/class'.format(fid)
+    url = 'http://localhost:5001/api/v1/Spells/{0}/class'.format(fid)
     print (url)
     async with aiohttp.ClientSession() as session:  # Async HTTP request
         raw_response = await session.get(url)
