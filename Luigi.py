@@ -145,6 +145,36 @@ async def spell(ctx, *id):
         raw_response = await session.get(url)
         response = await raw_response.text()
         response = json.loads(response)
+        if (not isinstance(response, list)) or (len(response) == 0):
+            snarky_response = [
+            'Yeah, I had an apprentice try that once.',
+            'Cloud tried to pull that once with a Carne Pyre...',
+            'Next time I see Russel.. i\'ll ask him what you mean.... ',
+            'Spellcasting is like cooking, it\'s not just ingrediants mixed together..',
+            ' I\'m too old for this shit..',
+            ' Yeah, And i\'ve met Dedestroyt too .. ',
+            ]
+            randomrespone = random.choice(snarky_response)
+            search = response.get('search', []) if isinstance(response, dict) else []
+            spelllist = ""
+            for s in search:
+                spell = s['name']
+                spelllist = spelllist + f"{spell}, "
+            message = f"""
+            >>> {randomrespone}
+            Did you really mean one of these? - {spelllist}
+            """
+            if (len(message)>2000):
+                for chunk in chunks(message, 1975):
+                    if (chunk.find(">>>")>0):
+                        await ctx.send(chunk)
+                    else:
+                        await ctx.send(">>> " + chunk)
+                return
+            else:
+                await ctx.send(message)
+                return
+
         parsed = response[0]
         fid = parsed['id']
 
